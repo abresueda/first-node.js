@@ -25,6 +25,7 @@ app.get('/test', function(req,res,next) {
     res.status(200).send({success:true});
 })
 app.use('/api',routes);
+
 app.listen(3000,() =>{
     console.log('ayaktayiz')
 })
