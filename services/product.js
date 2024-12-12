@@ -1,10 +1,34 @@
 const mongooseProduct = require('../models/product');
 const { param } = require('../routes');
- 
+const { createClient } = require('redis');
+
+let redisClient;
+
+async function createRedisClient() {
+    if(!redisClient){
+        redisClient = await createClient()
+        .on('error', err => console.log('Redis Client Error', err))
+        .connect();
+    }
+    return redisClient;   
+}
+
 async function getAllProduct() {
+    const key = "showcase";
     try{
-        const getAllProduct = await mongooseProduct.find();
-        return getAllProduct;
+        //Redisten veriyi çekmek için.
+        const client = await createRedisClient();
+        const getShowCase = await client.get(key);
+        
+        if(getShowCase === null) {
+            //İlk veritabanından alıyor, sonrasında redisten alarak daha hızlı işlem yapabiliyoruz.*Cacha Mekanizması*
+            const getAllProduct = await mongooseProduct.find();
+            await client.set(key, JSON.stringify(getAllProduct));
+            return getAllProduct;
+        }else{
+            return JSON.parse(getShowCase);
+        }
+        
     }catch(e){
         console.log(e);
         return false;
